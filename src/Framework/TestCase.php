@@ -1945,15 +1945,41 @@ abstract class PHPUnit_Framework_TestCase extends PHPUnit_Framework_Assert imple
 
             $passedKeys = array_flip(array_unique($passedKeys));
 
-            foreach ($this->dependencies as $dependency) {
-                $clone = false;
+            foreach ($this->dependencies as $_dependency) {
+                $argumentUnpacking = false;
+                $clone             = false;
+                $dependency        = false;
 
-                if (strpos($dependency, 'clone ') === 0) {
-                    $clone      = true;
-                    $dependency = substr($dependency, strlen('clone '));
-                } elseif (strpos($dependency, '!clone ') === 0) {
-                    $clone      = false;
-                    $dependency = substr($dependency, strlen('!clone '));
+                foreach (explode(' ', $_dependency) as $part) {
+                    switch ($part) {
+                        case 'clone': {
+                            $clone = true;
+                        }
+                        break;
+
+                        case '!clone': {
+                            $clone = false;
+                        }
+                        break;
+
+                        case 'argumentUnpacking': {
+                            $argumentUnpacking = true;
+                        }
+                        break;
+
+                        case '!argumentUnpacking': {
+                            $argumentUnpacking = false;
+                        }
+                        break;
+
+                        default: {
+                            $dependency = $part;
+                        }
+                    }
+                }
+
+                if (!is_string($dependency)) {
+                    throw new PHPUnit_Framework_Exception('Invalid @depends annotation');
                 }
 
                 if (strpos($dependency, '::') === false) {
